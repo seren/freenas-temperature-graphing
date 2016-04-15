@@ -1,10 +1,3 @@
-
-# for users with passwordless sudo
-#* * * * * sudo /mnt/mainpool/misc/temperature-monitoring/rrd.sh       /mnt/mainpool/misc/temperature-monitoring/temps-1min.rrd
-#* * * * * sudo /mnt/mainpool/misc/temperature-monitoring/rrd-graph.sh /mnt/mainpool/misc/temperature-monitoring/temps-1min.rrd
-#*/5 * * * * sudo /mnt/mainpool/misc/temperature-monitoring/rrd.sh       /mnt/mainpool/misc/temperature-monitoring/temps-5min.rrd
-#*/5 * * * * sudo /mnt/mainpool/misc/temperature-monitoring/rrd-graph.sh /mnt/mainpool/misc/temperature-monitoring/temps-5min.rrd
-
 # for the root account
 * * * * * /mnt/mainpool/misc/temperature-monitoring/rrd.sh       /mnt/mainpool/misc/temperature-monitoring/temps-1min.rrd
 * * * * * /mnt/mainpool/misc/temperature-monitoring/rrd-graph.sh /mnt/mainpool/misc/temperature-monitoring/temps-1min.rrd
