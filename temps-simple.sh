@@ -9,7 +9,7 @@ fi
 
 for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/ada/')) print $i }' );
 do
- DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | awk '/Temperature_Celsius/{print $0}' | awk '{print $10 "C"}'`;
+ DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | awk '/194 Temperature_Celsius/{print $0}' | awk '{print $10 "C"}'`;
  #DevSerNum=`/usr/local/sbin/smartctl -a /dev/$i | awk '/Serial Number:/{print $0}' | awk '{print $3}'`;
  #DevName=`/usr/local/sbin/smartctl -a /dev/$i | awk '/Device Model:/{print $0}' | awk '{print $3}'`;
  echo "$i - $DevTemp $DevSerNum $DevName";
