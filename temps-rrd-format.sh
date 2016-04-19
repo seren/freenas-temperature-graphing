@@ -22,7 +22,7 @@ sep=':'
 numcpus=$(/sbin/sysctl -n hw.ncpu)
 # Get drive device names
 drivedevs=
-for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/ada/')) print $i }' ); do
+for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/da/')) print $i }' ); do
   drivedevs="${drivedevs} ${i}"
 done
 
@@ -38,9 +38,6 @@ for i in ${drivedevs}; do
  data="${data}${sep}${DevTemp}"
 done
 
-# remove the C's from the temps
-data=`echo ${data} | tr -d 'C'`
-
-# strip the unnecessary leading colon
-echo ${data#?}
+# Strip any leading, trailing, or duplicate colons
+echo "${data}" | sed 's/:::*/:/;s/^://;s/:$//'
 
