@@ -26,6 +26,7 @@ fi
 ######################################
 # Script variables
 ######################################
+# These are arbitrary
 MAXGRAPHTEMP=50
 MINGRAPHTEMP=20
 SAFETEMPLINE=40
@@ -74,7 +75,7 @@ write_graph_to_disk ()
   --alt-autoscale \
   --lower-limit ${MINGRAPHTEMP} \
   --upper-limit ${MAXGRAPHTEMP} \
-  --rigid
+  --rigid > /dev/null
   # "HRULE:${SAFETEMPLINE}#FF0000:Max safe temp - ${SAFETEMPLINE}"
   # "HRULE:${SAFETEMPLINE}#FF0000:Max-${SAFETEMPLINE}"
 }
