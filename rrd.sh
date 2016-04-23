@@ -33,16 +33,21 @@ fi
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 
-# Get CPU numbers
-numcpus=$(/sbin/sysctl -n hw.ncpu)
-# Get drive device names
-drivedevs=
-for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/ada/')) print $i }' ); do
-  drivedevs="${drivedevs} ${i}"
-done
-
-
+# If the rrdtool database file doesn't exist, create it
 if ! [ -f $1 ]; then
+  # Get CPU numbers
+  numcpus=$(/sbin/sysctl -n hw.ncpu)
+  # Get drive device names
+  drivedevs=
+  for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/da/')) print $i }' ); do
+    # Sanity check that the drive will return a tempurature (we don't want to include non-SMART usb devices)
+    DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | awk '/194 Temperature_Celsius/{print $0}' | awk '{print $10}'`;
+    if ! [[ "$DevTemp" == "" ]]; then
+      drivedevs="${drivedevs} ${i}"
+    fi
+  done
+
+  # Calculate the sampling interval from the filename
   interval=`echo $1 | sed 's/.*temps-\(.*\)min.rrd/\1/'`
   if [[ "$interval" == "" ]]; then
     interval=1
@@ -50,6 +55,7 @@ if ! [ -f $1 ]; then
   timespan=$((interval * 60))
   doubletimespan=$((timespan * 2))
 
+  # Generate the arguments the db creation for each cpu and drive
   rrdarg=
   for (( i=0; i < ${numcpus}; i++ )); do
     rrdarg="${rrdarg} DS:cpu${i}:GAUGE:${doubletimespan}:0:150"
