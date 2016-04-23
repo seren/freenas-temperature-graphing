@@ -34,8 +34,10 @@ for (( i=0; i < ${numcpus}; i++ )); do
 done
 # Get drive temperatures
 for i in ${drivedevs}; do
- DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | grep '194 *Temperature_Celsius' | awk '{print $10}'`;
- data="${data}${sep}${DevTemp}"
+  DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | grep '194 *Temperature_Celsius' | awk '{print $10}'`;
+  if ! [[ "$DevTemp" == "" ]]; then
+    data="${data}${sep}${DevTemp}"
+  fi
 done
 
 # Strip any leading, trailing, or duplicate colons
