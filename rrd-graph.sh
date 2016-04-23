@@ -9,11 +9,6 @@
 # Date: 2016-04-02
 #####
 
-# quit on errors
-set -o errexit
-# error on unset variables
-set -o nounset
-
 if [ -z $1 ]; then
   echo "Error: you need to give an input filename as an argument. Ex:"
   echo " $0 temps-Xmin.rrd"
