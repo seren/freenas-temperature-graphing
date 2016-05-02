@@ -50,8 +50,12 @@ interval=`echo $datafile | sed 's/.*temps-\(.*\)min.rrd/\1/'`  # extract minute 
 numcpus=$(/sbin/sysctl -n hw.ncpu)
 # Get drive device names
 drivedevs=
-for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/ada/')) print $i }' ); do
-  drivedevs="${drivedevs} ${i}"
+for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/da/')) print $i }' ); do
+  # Sanity check that the drive will return a temperature (we don't want to include non-SMART usb devices)
+  DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | awk '/194 Temperature_Celsius/{print $0}' | awk '{print $10}'`;
+  if ! [[ "$DevTemp" == "" ]]; then
+    drivedevs="${drivedevs} ${i}"
+  fi
 done
 
 title="Temps"
