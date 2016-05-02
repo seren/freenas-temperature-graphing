@@ -1,4 +1,8 @@
 # for the root account
+
+# NOTE: It's much better to put these in the FreeNAS scheduled tasks, rather than crontab. Crontab entries are reset
+# every time FreeNAS is updated.
+
 * * * * * /mnt/mainpool/misc/temperature-monitoring/rrd.sh       /mnt/mainpool/misc/temperature-monitoring/temps-1min.rrd
 * * * * * /mnt/mainpool/misc/temperature-monitoring/rrd-graph.sh /mnt/mainpool/misc/temperature-monitoring/temps-1min.rrd
 */5 * * * * /mnt/mainpool/misc/temperature-monitoring/rrd.sh       /mnt/mainpool/misc/temperature-monitoring/temps-5min.rrd
