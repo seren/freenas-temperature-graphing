@@ -1,7 +1,8 @@
 freenas-temperature-graphing
 ============================
 
-Bash scripts to graph FreeNAS CPU and drive temperatures. Tested on 9.3 and
+Bash scripts to graph FreeNAS CPU and drive temperatures. Graphs are generated
+in the same directory as the scripts (not the web interface). Tested on 9.3 and
 9.10.
 
  
@@ -16,8 +17,6 @@ Example output:
 ![CPU temperatures per 5 minutes](examples/temps-5min-cpus.png)
 
 ![Drive temperatures per 5 minutes](examples/temps-5min-drives.png)
-
-The color scheme is easy to change. Pull requests welcome
 
  
 
@@ -63,6 +62,11 @@ Installation:
         are generated). Make sure the task is **enabled**. See [screenshot
         3](examples/task3.png)
 
+    6.  After about 5 intervals, you should have enough data that the graphs
+        will start contain visible data. The graphs will appear as png files in
+        the same directory as the scripts (regardless of where the rrd files are
+        stored).
+
  
 
 Extras:
@@ -72,3 +76,7 @@ The rrd-graph.sh script contains code to graph each device individually as well
 as all together. Just uncomment the appropriate blocks.
 
 The colors can be adjusted at the top of the rrd-graph.sh file.
+
+ 
+
+Pull requests welcome
