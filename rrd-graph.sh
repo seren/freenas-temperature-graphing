@@ -9,13 +9,64 @@
 # Date: 2016-04-02
 #####
 
-if [ -z $1 ]; then
-  echo "Error: you need to give an input filename as an argument. Ex:"
-  echo " $0 temps-Xmin.rrd"
+# # display expanded values
+# set -o xtrace
+# # quit on errors
+# set -o errexit
+# # error on unset variables
+# set -o nounset
+
+
+# Helpful usage message
+func_usage () {
+  echo '
+Given an rrd file of the system cpu and drive temperatures
+as input, this script uses rrdtool to graph the data.
+
+Usage $0 [-v] [-d] [-h] output-filename
+
+-v | --verbos  Enables verbose output
+-d | --debug   Outputs each line of the script as it executes (turns on xtrace)
+-h | --help    Displays this message
+
+Note: The filename must be in the following format: temps-Xmin.rdd
+  where X is the minute interval between readings.
+  ex: "temps-10min.rrd" would contain readings every 10 minutes
+
+Example:
+  $0 /mnt/mainpool/temperatures/temps-5min.rrd
+'
+}
+
+# Process command line args
+help=
+verbose=
+debug=
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)  help=1;                     shift 1 ;;
+    -v|--verbose) verbose=1;                shift 1 ;;
+    -d|--debug) debug=1;                    shift 1 ;;
+    -*)         echo "$0: Unrecognized option: $1 (try --help)" >&2; exit 1 ;;
+    *)          datafile=$1;                shift 1; break ;;
+  esac
+done
+
+[ -n $verbose ] && set -o xtrace
+
+[ -n $help ] && func_usage && exit 0
+
+# Check that we were supplied a db filename
+if [ -z ${datafile} ]; then
+  echo "Error: you need to give a rrdtool database filename as an argument."
   echo
-  echo "Exiting..."
+  func_usage
   exit 1
 fi
+
+# Debugging info
+[ -n $verbose ] && echo "Rrdtool database filename: ${datafile}"
+
 
 
 ######################################
@@ -38,13 +89,13 @@ LINECOLORS=( 000000 00FF00 0000FF FF0000 01FFFE FFA6FE FFDB66 006401 010067 9500
 NUMCOLORS=${#LINECOLORS[@]}
 colorindex=0
 
-BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Get current working directory
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+[ -n $verbose ] && echo "Current working directory is: ${CWD}"
 
 # rrdtool database file
-datafile=$1
 outputprefix=${datafile%.*}  # strip extension
 outputprefix=${outputprefix##*/}   # extract filename
-interval=`echo $datafile | sed 's/.*temps-\(.*\)min.rrd/\1/'`  # extract minute number
 
 # Get CPU numbers
 numcpus=$(/sbin/sysctl -n hw.ncpu)
@@ -57,6 +108,8 @@ for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i
     drivedevs="${drivedevs} ${i}"
   fi
 done
+[ -n $verbose ] && echo "numcpus: ${numcpus}"
+[ -n $verbose ] && echo "drivedevs: ${drivedevs}"
 
 title="Temps"
 
@@ -66,7 +119,7 @@ title="Temps"
 ######################################
 write_graph_to_disk ()
 {
-  /usr/local/bin/rrdtool graph ${BASEDIR}/${outputprefix}-${outputfilename}.png \
+  /usr/local/bin/rrdtool graph ${CWD}/${outputprefix}-${outputfilename}.png \
   -w 785 -h 151 -a PNG \
   --slope-mode \
   --start end-${timespan} --end now \
@@ -97,11 +150,14 @@ write_graph_to_disk ()
 # a week:  604800
 # 30 days: 2592000
 
-interval=`echo ${datafile} | sed 's/.*temps-\(.*\)min.rrd/\1/'`
-if [[ "$interval" == "" ]]; then
-  interval=1
+interval=`echo ${datafile} | sed 's/.*temps-\(.*\)min.rrd/\1/'`  # extract minute number
+if [ -z $interval ]; then
+  echo "Couldn't find a minute number in filename '${datafile}' (should in format: temps-5min.rrd)."
+  exit 1
 fi
+[ -n $verbose ] && echo "Interval minutes: ${interval}"
 timespan=$((interval * 86400))
+[ -n $verbose ] && echo "Graph timespan seconds: ${timespan}"
 
 # # Graph all cpus and drives together
 # outputfilename=everything
@@ -121,27 +177,33 @@ timespan=$((interval * 86400))
 # write_graph_to_disk
 
 # Output a combined graph of all cpus
+[ -n $verbose ] && echo "Output a combined graph of all cpus"
 outputfilename=cpus
 defsandlines=
 title="Temperature: All CPUs, ${interval} minute interval"
 guidrule=
 for (( i=0; i < ${numcpus}; i++ )); do
+  [ -n $verbose ] && echo "cpu: ${i}"
   (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
   defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
 done
+[ -n $verbose ] && echo "Definitions and lines: ${defsandlines}"
 write_graph_to_disk
 
 # Output a combined graph of all drives
+[ -n $verbose ] && echo "Output a combined graph of all drives"
 outputfilename=drives
 defsandlines=
 title="Temperature: All Drives, ${interval} minute interval"
 guidrule=HRULE:${SAFETEMPLINE}#FF0000:Max-safe-temp:dashes
 i=0
 for drdev in ${drivedevs}; do
+  [ -n $verbose ] && echo "drive device: ${drdev}"
   (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
   defsandlines="${defsandlines} DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#${LINECOLORS[$colorindex]}:${drdev}"
   (( i = i + 1 ))
 done
+[ -n $verbose ] && echo "Definitions and lines: ${defsandlines}"
 write_graph_to_disk
 
 # # Output graphs of each cpu

@@ -9,32 +9,84 @@
 # Date: 2016-04-02
 #####
 
+# # display expanded values
+# set -o xtrace
 # # quit on errors
 # set -o errexit
 # # error on unset variables
 # set -o nounset
 
 
+# Helpful usage message
+func_usage () {
+  echo '
+This script generates and updates an rrdtool database
+of CPU and drive temperatures. It calls "temps-rrd-format.sh"
+to actually get the data in a format it can use.
+It writes the data files to the same directory it
+runs from.
 
+Usage $0 [-v] [-d] [-h] output-filename
+
+-v | --verbos  Enables verbose output
+-d | --debug   Outputs each line of the script as it executes (turns on xtrace)
+-h | --help    Displays this message
+
+Note: The filename must be in the following format: temps-Xmin.rdd
+  where X is the minute interval between readings.
+  ex: "temps-10min.rrd" would contain readings every 10 minutes
+
+Example:
+  $0 /mnt/mainpool/temperatures/temps-5min.rrd
+'
+}
+
+
+
+# Process command line args
+help=
+verbose=
+debug=
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)  help=1;                     shift 1 ;;
+    -v|--verbose) verbose=1;                shift 1 ;;
+    -d|--debug) debug=1;                    shift 1 ;;
+    -*)         echo "$0: Unrecognized option: $1 (try --help)" >&2; exit 1 ;;
+    *)          datafile=$1;                     shift 1; break ;;
+  esac
+done
+
+[ -n $verbose ] && set -o xtrace
+
+[ -n $help ] && func_usage && exit 0
+
+# Check we're root
 if [ "$(id -u)" != "0" ]; then
   echo "Error: this script needs to be run as root (for smartctl). Try 'sudo $0 $1'"
   exit 1
 fi
 
-if [ -z $1 ]; then
-  echo "Error: you need to give an output filename as an argument. Ex:"
-  echo " $0 outputdata.rrd"
+# Check that we were supplied a db filename
+if [ -z ${datafile} ]; then
+  echo "Error: you need to give an output filename as an argument."
   echo
-  echo "Exiting..."
+  func_usage
   exit 1
 fi
 
+# Debugging info
+[ -n $verbose ] && echo "Rrdtool database filename: ${datafile}"
+
+
 # Get current working directory
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+[ -n $verbose ] && echo "Current working directory is: ${CWD}"
 
 
 # If the rrdtool database file doesn't exist, create it
-if ! [ -f $1 ]; then
+if ! [ -f ${datafile} ]; then
+  [ -n $verbose ] && echo "Rrdtool database doesn't exist. Creating it."
   # Get CPU numbers
   numcpus=$(/sbin/sysctl -n hw.ncpu)
   # Get drive device names
@@ -45,17 +97,21 @@ if ! [ -f $1 ]; then
     if ! [[ "$DevTemp" == "" ]]; then
       drivedevs="${drivedevs} ${i}"
     fi
+    [ -n $verbose ] && echo "numcpus: ${numcpus}"
+    [ -n $verbose ] && echo "drivedevs: ${drivedevs}"
   done
 
   # Calculate the sampling interval from the filename
-  interval=`echo $1 | sed 's/.*temps-\(.*\)min.rrd/\1/'`
-  if [[ "$interval" == "" ]]; then
-    interval=1
+  interval=`echo ${datafile} | sed 's/.*temps-\(.*\)min.rrd/\1/'`  # extract minute number
+  if [ -z $interval ]; then
+    echo "Couldn't find a minute number in filename '${datafile}' (should in format: temps-5min.rrd)."
+    exit 1
   fi
   timespan=$((interval * 60))
   doubletimespan=$((timespan * 2))
+  [ -n $verbose ] && echo "Sampling every ${timespan} seconds"
 
-  # Generate the arguments the db creation for each cpu and drive
+  # Generate the arguments for db creation for each cpu and drive
   rrdarg=
   for (( i=0; i < ${numcpus}; i++ )); do
     rrdarg="${rrdarg} DS:cpu${i}:GAUGE:${doubletimespan}:0:150"
@@ -64,14 +120,24 @@ if ! [ -f $1 ]; then
     rrdarg="${rrdarg} DS:${i}:GAUGE:${doubletimespan}:0:100"
   done
 
-  echo "Creating $1"
-  echo $rrdarg
-  echo /usr/local/bin/rrdtool create $1 --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
-  /usr/local/bin/rrdtool create $1 --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
+  echo "Creating rrdtool db file: ${datafile}"
+  echo "Rrdtool arguments:  ${rrdarg}"
+  echo /usr/local/bin/rrdtool create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
+  /usr/local/bin/rrdtool create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
 fi
 
+
+[ -n $verbose ] && echo "Running script: '${CWD}/temps-rrd-format.sh'"
+[ -n $verbose ] && echo ""
+[ -n $verbose ] && echo ""
+[ -n $verbose ] && ${CWD}/temps-rrd-format.sh "$@"
+[ -n $verbose ] && echo ""
+[ -n $verbose ] && echo ""
+[ -n $verbose ] && echo "(running script again non-verbosely)"
 data=`${CWD}/temps-rrd-format.sh`
-# echo $data
-/usr/local/bin/rrdtool update $1 N:$data
-# echo "/usr/local/bin/rrdtool update $1 N:$data"
-# echo "Added: $data"
+[ -n $verbose ] && echo "Data: ${data}"
+[ -n $verbose ] && echo ""
+[ -n $verbose ] && echo "Updating the db: '/usr/local/bin/rrdtool update ${datafile} N:${data}'"
+/usr/local/bin/rrdtool update ${datafile} N:${data}
+[ -n $verbose ] && echo "Added data"
+

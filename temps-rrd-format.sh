@@ -6,13 +6,49 @@
 # Date: 2016-04-02
 #####
 
+# # display expanded values
+# set -o xtrace
 # quit on errors
 set -o errexit
 # error on unset variables
 set -o nounset
 
+
+# Helpful usage message
+func_usage () {
+  echo ' This script gathers and outputs the CPU and drive
+temperatures in a format rrdtool can consume.
+
+Usage $0 [-v] [-d] [-h]
+
+-v | --verbos  Enables verbose output
+-d | --debug   Outputs each line of the script as it executes (turns on xtrace)
+-h | --help    Displays this message
+'
+}
+
+
+# Process command line args
+help=
+verbose=
+debug=
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)  help=1;                     shift 1 ;;
+    -v|--verbose) verbose=1;                shift 1 ;;
+    -d|--debug) debug=1;                    shift 1 ;;
+    -*)         echo "$0: Unrecognized option: $1 (try --help)" >&2; exit 1 ;;
+    *)          shift 1; break ;;
+  esac
+done
+
+[ -n $verbose ] && set -o xtrace
+
+[ -n $help ] && func_usage && exit 0
+
+# Check we're root
 if [ "$(id -u)" != "0" ]; then
-  echo "Error: this script needs to be run as root (for smartctl). Try 'sudo $0'"
+  echo "Error: this script needs to be run as root (for smartctl). Try 'sudo $0 $1'"
   exit 1
 fi
 
@@ -25,6 +61,8 @@ drivedevs=
 for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/da/')) print $i }' ); do
   drivedevs="${drivedevs} ${i}"
 done
+[ -n $verbose ] && echo "numcpus: ${numcpus}"
+[ -n $verbose ] && echo "drivedevs: ${drivedevs}"
 
 # Get CPU temperatures
 data=
@@ -39,7 +77,10 @@ for i in ${drivedevs}; do
     data="${data}${sep}${DevTemp}"
   fi
 done
+[ -n $verbose ] && echo "Raw data: ${data}"
 
 # Strip any leading, trailing, or duplicate colons
+[ -n $verbose ] && echo "Cleaned up data:
 echo "${data}" | sed 's/:::*/:/;s/^://;s/:$//'
 
+[ -n $verbose ] && echo "Done gathering temp data returning"
