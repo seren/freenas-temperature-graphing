@@ -41,6 +41,16 @@ Example:
 '
 }
 
+func_test_writable () {
+  {  # try
+    touch ${1}
+  } || {  # catch
+    echo ''
+    echo "Error: Could not write to '${1}'."
+    echo "Check that the enclosing directory exists and is is writable by the script user"
+    exit 1
+  }
+}
 
 
 # Process command line args
@@ -57,9 +67,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -n $verbose ] && set -o xtrace
+[ -n "$verbose" ] && set -o xtrace
 
-[ -n $help ] && func_usage && exit 0
+[ -n "$help" ] && func_usage && exit 0
 
 # Check we're root
 if [ "$(id -u)" != "0" ]; then
@@ -76,17 +86,17 @@ if [ -z ${datafile} ]; then
 fi
 
 # Debugging info
-[ -n $verbose ] && echo "Rrdtool database filename: ${datafile}"
+[ -n "$verbose" ] && echo "Rrdtool database filename: ${datafile}"
 
 
 # Get current working directory
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-[ -n $verbose ] && echo "Current working directory is: ${CWD}"
+[ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
 
 
 # If the rrdtool database file doesn't exist, create it
 if ! [ -f ${datafile} ]; then
-  [ -n $verbose ] && echo "Rrdtool database doesn't exist. Creating it."
+  [ -n "$verbose" ] && echo "Rrdtool database doesn't exist. Creating it."
   # Get CPU numbers
   numcpus=$(/sbin/sysctl -n hw.ncpu)
   # Get drive device names
@@ -97,8 +107,8 @@ if ! [ -f ${datafile} ]; then
     if ! [[ "$DevTemp" == "" ]]; then
       drivedevs="${drivedevs} ${i}"
     fi
-    [ -n $verbose ] && echo "numcpus: ${numcpus}"
-    [ -n $verbose ] && echo "drivedevs: ${drivedevs}"
+    [ -n "$verbose" ] && echo "numcpus: ${numcpus}"
+    [ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"
   done
 
   # Calculate the sampling interval from the filename
@@ -109,7 +119,7 @@ if ! [ -f ${datafile} ]; then
   fi
   timespan=$((interval * 60))
   doubletimespan=$((timespan * 2))
-  [ -n $verbose ] && echo "Sampling every ${timespan} seconds"
+  [ -n "$verbose" ] && echo "Sampling every ${timespan} seconds"
 
   # Generate the arguments for db creation for each cpu and drive
   rrdarg=
@@ -120,24 +130,27 @@ if ! [ -f ${datafile} ]; then
     rrdarg="${rrdarg} DS:${i}:GAUGE:${doubletimespan}:0:100"
   done
 
+  func_test_writable ${datafile}
+
   echo "Creating rrdtool db file: ${datafile}"
   echo "Rrdtool arguments:  ${rrdarg}"
   echo /usr/local/bin/rrdtool create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
   /usr/local/bin/rrdtool create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
 fi
 
+func_test_writable ${datafile}
 
-[ -n $verbose ] && echo "Running script: '${CWD}/temps-rrd-format.sh'"
-[ -n $verbose ] && echo ""
-[ -n $verbose ] && echo ""
-[ -n $verbose ] && ${CWD}/temps-rrd-format.sh "$@"
-[ -n $verbose ] && echo ""
-[ -n $verbose ] && echo ""
-[ -n $verbose ] && echo "(running script again non-verbosely)"
+[ -n "$verbose" ] && echo "Running script: '${CWD}/temps-rrd-format.sh'"
+[ -n "$verbose" ] && echo ""
+[ -n "$verbose" ] && echo ""
+[ -n "$verbose" ] && ${CWD}/temps-rrd-format.sh "$@"
+[ -n "$verbose" ] && echo ""
+[ -n "$verbose" ] && echo ""
+[ -n "$verbose" ] && echo "(running script again non-verbosely)"
 data=`${CWD}/temps-rrd-format.sh`
-[ -n $verbose ] && echo "Data: ${data}"
-[ -n $verbose ] && echo ""
-[ -n $verbose ] && echo "Updating the db: '/usr/local/bin/rrdtool update ${datafile} N:${data}'"
+[ -n "$verbose" ] && echo "Data: ${data}"
+[ -n "$verbose" ] && echo ""
+[ -n "$verbose" ] && echo "Updating the db: '/usr/local/bin/rrdtool update ${datafile} N:${data}'"
 /usr/local/bin/rrdtool update ${datafile} N:${data}
-[ -n $verbose ] && echo "Added data"
+[ -n "$verbose" ] && echo "Added data"
 

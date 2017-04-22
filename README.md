@@ -77,6 +77,13 @@ as all together. Just uncomment the appropriate blocks.
 
 The colors can be adjusted at the top of the rrd-graph.sh file.
 
+Troubleshooting:
+----------------
+
+- Try running the script manually with the verbose flag (-v). Example: **/mnt/mainpool/misc/temperature-monitoring/rrd-graph.sh -v /mnt/mainpool/misc/temperature-monitoring/temps-5min.rrd**
+
+- If you get an error like "ERROR: mmaping file '/path/to/your/rrd/file': Invalid argument", it probably means that the rrd file wasn't initialized properly. Try deleting it and running the script again (it should initialize a new one if it's missing)
+
  
 
 Pull requests welcome
