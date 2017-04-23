@@ -82,8 +82,16 @@ Troubleshooting:
 
 - Try running the script manually with the verbose flag (-v). Example: **/mnt/mainpool/misc/temperature-monitoring/rrd-graph.sh -v /mnt/mainpool/misc/temperature-monitoring/temps-5min.rrd**
 
-- If you get an error like "ERROR: mmaping file '/path/to/your/rrd/file': Invalid argument", it probably means that the rrd file wasn't initialized properly. Try deleting it and running the script again (it should initialize a new one if it's missing)
+- Errors and possible causes:
+    
+    - `"ERROR: mmaping file '/mnt/mainpool/misc/temperature-monitoring/temps-60min.rrd': Invalid argument"`
+        
+        - This probably means that the rrd file wasn't initialized properly. Try deleting it and running the script again (it should initialize a new one if it's missing)
 
- 
+    - `ERROR: opening '/mnt/mainpool/misc/temperature-monitoring/temps-60min.rrd': No such file or directory`
+        
+        - This may happen on the first run, if the graphing script runs before the temperature-gathering script runs. It should only happen once.
+
+
 
 Pull requests welcome
