@@ -67,7 +67,10 @@ fi
 # Debugging info
 [ -n "$verbose" ] && echo "Rrdtool database filename: ${datafile}"
 
-
+# Sleep to give time for the data-collection script to finish (if we're running non-interactively)
+if [ -v PS1 ]; then
+  sleep 5
+fi
 
 ######################################
 # Script variables
@@ -88,6 +91,8 @@ LINECOLORS=( 000000 00FF00 0000FF FF0000 01FFFE FFA6FE FFDB66 006401 010067 9500
 
 NUMCOLORS=${#LINECOLORS[@]}
 colorindex=0
+
+
 
 # Get current working directory
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
