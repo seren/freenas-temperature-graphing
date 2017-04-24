@@ -2,8 +2,10 @@
 #####
 # This script gathers and outputs the CPU and drive
 # temperatures in a format rrdtool can consume.
+#
 # Author: Seren Thompson
-# Date: 2016-04-02
+# Date: 2017-04-24
+# Website: https://github.com/seren/freenas-temperature-graphing
 #####
 
 # # display expanded values

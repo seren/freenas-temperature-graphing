@@ -5,8 +5,10 @@
 # to actually get the data in a format it can use.
 # It writes the data files to the same directory it
 # runs from.
+#
 # Author: Seren Thompson
-# Date: 2016-04-02
+# Date: 2017-04-24
+# Website: https://github.com/seren/freenas-temperature-graphing
 #####
 
 # # display expanded values

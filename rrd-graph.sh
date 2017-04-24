@@ -5,8 +5,10 @@
 # The input files must named as such: temps-Xmin.rdd
 # where X is the minute interval between readings.
 # ex: "temps-10min.rrd" would contain readings every 10 minutes
+#
 # Author: Seren Thompson
-# Date: 2016-04-02
+# Date: 2017-04-24
+# Website: https://github.com/seren/freenas-temperature-graphing
 #####
 
 # # display expanded values
