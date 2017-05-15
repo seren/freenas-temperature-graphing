@@ -44,9 +44,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -n $verbose ] && set -o xtrace
+[ -n "$verbose" ] && set -o xtrace
 
-[ -n $help ] && func_usage && exit 0
+[ -n "$help" ] && func_usage && exit 0
 
 # Check we're root
 if [ "$(id -u)" != "0" ]; then
@@ -63,8 +63,8 @@ drivedevs=
 for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/da/')) print $i }' ); do
   drivedevs="${drivedevs} ${i}"
 done
-[ -n $verbose ] && echo "numcpus: ${numcpus}"
-[ -n $verbose ] && echo "drivedevs: ${drivedevs}"
+[ -n "$verbose" ] && echo "numcpus: ${numcpus}"
+[ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"
 
 # Get CPU temperatures
 data=
@@ -79,10 +79,10 @@ for i in ${drivedevs}; do
     data="${data}${sep}${DevTemp}"
   fi
 done
-[ -n $verbose ] && echo "Raw data: ${data}"
+[ -n "$verbose" ] && echo "Raw data: ${data}"
 
 # Strip any leading, trailing, or duplicate colons
-[ -n $verbose ] && echo "Cleaned up data:
+[ -n "$verbose" ] && echo "Cleaned up data:"
 echo "${data}" | sed 's/:::*/:/;s/^://;s/:$//'
 
-[ -n $verbose ] && echo "Done gathering temp data returning"
+[ -n "$verbose" ] && echo "Done gathering temp data returning"
