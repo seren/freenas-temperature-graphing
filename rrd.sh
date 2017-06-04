@@ -46,9 +46,10 @@ Example:
 }
 
 func_test_writable () {
+  # If it doesn't exist, exit with a non-error code
   if ! [ -e ${1} ]; then
-    echo "Datafile '${1}' doesn't exist"
-    return 1
+    echo "'${1}' doesn't exist"
+    return 0
   fi
   # Exit if the data file is something other than a file for safety and security
   if [ -e ${1} ] && ! [ -f ${1} ]; then
@@ -144,11 +145,11 @@ fi
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
 
-func_test_writable "${datafile}"
 
-
-# If the rrdtool database file doesn't exist, create it
-if ! [ -e ${datafile} ]; then
+# If the rrdtool database exists, make sure it's writable. Otherwise create it
+if [ -e ${datafile} ]; then
+  func_test_writable "${datafile}" || exit 1
+else
   [ -n "$verbose" ] && echo "Rrdtool database doesn't exist. Creating it."
   # Get CPU numbers
   numcpus=$(/sbin/sysctl -n hw.ncpu)
@@ -182,8 +183,6 @@ if ! [ -e ${datafile} ]; then
   for i in ${drivedevs}; do
     rrdarg="${rrdarg} DS:${i}:GAUGE:${doubletimespan}:0:100"
   done
-
-  func_test_writable ${datafile} && exit 1
 
   echo "Creating rrdtool db file: ${datafile}"
   echo "Rrdtool arguments:  ${rrdarg}"
