@@ -19,6 +19,8 @@
 # set -o nounset
 
 
+RRDTOOL=/usr/local/bin/rrdtool
+
 # Helpful usage message
 func_usage () {
   echo '
@@ -44,16 +46,60 @@ Example:
 }
 
 func_test_writable () {
+  if ! [ -e ${1} ]; then
+    echo "Datafile '${1}' doesn't exist"
+    return 1
+  fi
+  # Exit if the data file is something other than a file for safety and security
+  if [ -e ${1} ] && ! [ -f ${1} ]; then
+    echo "Datafile '${1}' exists, but isn't a file."
+    exit 1
+  fi
   {  # try
     touch ${1}
+    return 0
   } || {  # catch
     echo ''
     echo "Error: Could not write to '${1}'."
     echo "Check that the enclosing directory exists and is is writable by the script user"
-    exit 1
+    return 1
   }
 }
 
+func_compare_data_field_count_to_rrd_gauge_count () {
+  if [ -z "${data}" ]; then
+    echo "Data variable is empty"
+    return 1
+  fi
+  gauges_in_file=$(${RRDTOOL} info ${datafile} | grep -c 'type = "GAUGE"')
+  colons_from_data="${data//[^:]}"
+  fields_in_data="${#data}"
+  if [ "${gauges_in_file}" == "${fields_in_data}" ]; then
+    echo "The number of fields in the rrd file (${gauges_in_file}) does not match the number of fields supplied (${fields_in_data})"
+    echo "You may need to delete the rrd file and try again"
+    return 1
+  fi
+  return 0
+}
+
+func_debug_setup () {
+  func_debug_setup_return_test () {
+    if ! [ "$1" == "0" ]; then
+      echo "Test failed (returned $1)"
+      exit 1
+    fi
+  }
+
+  echo "Testing file permissions..."
+  func_test_writable "${datafile}"
+  func_debug_setup_return_test $?
+
+  echo "Testing file field count..."
+  func_compare_data_field_count_to_rrd_gauge_count
+  func_debug_setup_return_test $?
+
+  echo "Daignostics didn't find anything wrong."
+}
 
 # Process command line args
 help=
@@ -95,9 +141,11 @@ fi
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
 
+func_test_writable "${datafile}"
+
 
 # If the rrdtool database file doesn't exist, create it
-if ! [ -f ${datafile} ]; then
+if ! [ -e ${datafile} ]; then
   [ -n "$verbose" ] && echo "Rrdtool database doesn't exist. Creating it."
   # Get CPU numbers
   numcpus=$(/sbin/sysctl -n hw.ncpu)
@@ -132,15 +180,14 @@ if ! [ -f ${datafile} ]; then
     rrdarg="${rrdarg} DS:${i}:GAUGE:${doubletimespan}:0:100"
   done
 
-  func_test_writable ${datafile}
+  func_test_writable ${datafile} && exit 1
 
   echo "Creating rrdtool db file: ${datafile}"
   echo "Rrdtool arguments:  ${rrdarg}"
-  echo /usr/local/bin/rrdtool create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
-  /usr/local/bin/rrdtool create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
+  echo ${RRDTOOL} create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
+  ${RRDTOOL} create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
 fi
 
-func_test_writable ${datafile}
 
 [ -n "$verbose" ] && echo "Running script: '${CWD}/temps-rrd-format.sh'"
 [ -n "$verbose" ] && echo ""
@@ -152,7 +199,13 @@ func_test_writable ${datafile}
 data=`${CWD}/temps-rrd-format.sh`
 [ -n "$verbose" ] && echo "Data: ${data}"
 [ -n "$verbose" ] && echo ""
-[ -n "$verbose" ] && echo "Updating the db: '/usr/local/bin/rrdtool update ${datafile} N:${data}'"
-/usr/local/bin/rrdtool update ${datafile} N:${data}
-[ -n "$verbose" ] && echo "Added data"
-
+[ -n "$verbose" ] && echo "Updating the db: '${RRDTOOL} update ${datafile} N:${data}'"
+${RRDTOOL} update ${datafile} N:${data}
+if ! [ $? == 0 ]; then
+  echo "ERROR: Couldn't update ${datafile} with the data provided. Running diagnostics..."
+  func_debug_setup
+  exit 1
+else
+  [ -n "$verbose" ] && echo "Added data"
+  exit 0
+fi
