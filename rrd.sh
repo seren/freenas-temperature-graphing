@@ -45,6 +45,7 @@ Example:
 '
 }
 
+# Checks that a file is writeable
 func_test_writable () {
   # If it doesn't exist, exit with a non-error code
   if ! [ -e ${1} ]; then
@@ -53,7 +54,7 @@ func_test_writable () {
   fi
   # Exit if the data file is something other than a file for safety and security
   if [ -e ${1} ] && ! [ -f ${1} ]; then
-    echo "Datafile '${1}' exists, but isn't a file."
+    echo "'${1}' exists, but isn't a file."
     exit 1
   fi
   {  # try
@@ -67,6 +68,7 @@ func_test_writable () {
   }
 }
 
+# Checks whether the rrd file and the data variable have matching number of fields
 func_compare_data_field_count_to_rrd_gauge_count () {
   if [ -z "${data}" ]; then
     echo "Data variable is empty"
@@ -83,6 +85,7 @@ func_compare_data_field_count_to_rrd_gauge_count () {
   return 0
 }
 
+# Run sanity checks and validations
 func_debug_setup () {
   func_debug_setup_return_test () {
     if ! [ "$1" == "0" ]; then
@@ -101,6 +104,10 @@ func_debug_setup () {
 
   echo "Daignostics didn't find anything wrong."
 }
+
+
+
+
 
 # Process command line args
 help=
@@ -177,7 +184,7 @@ else
 
   # Generate the arguments for db creation for each cpu and drive
   rrdarg=
-  for (( i=0; i < ${numcpus}; i++ )); do
+  for (( i=0; i < numcpus; i++ )); do
     rrdarg="${rrdarg} DS:cpu${i}:GAUGE:${doubletimespan}:0:150"
   done
   for i in ${drivedevs}; do
@@ -194,7 +201,7 @@ fi
 [ -n "$verbose" ] && echo "Running script: '${CWD}/temps-rrd-format.sh'"
 [ -n "$verbose" ] && echo ""
 [ -n "$verbose" ] && echo ""
-[ -n "$verbose" ] && ${CWD}/temps-rrd-format.sh "$@"
+[ -n "$verbose" ] && "${CWD}/temps-rrd-format.sh" "$@"
 [ -n "$verbose" ] && echo ""
 [ -n "$verbose" ] && echo ""
 [ -n "$verbose" ] && echo "(running script again non-verbosely)"
