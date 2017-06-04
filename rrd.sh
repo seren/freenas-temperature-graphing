@@ -85,6 +85,12 @@ func_compare_data_field_count_to_rrd_gauge_count () {
   return 0
 }
 
+# Does rrdtool barf when trying to parse the data file?
+func_check_file_is_rrd () {
+  ${RRDTOOL} info "${1}" &>/dev/null
+  return $?
+}
+
 # Run sanity checks and validations
 func_debug_setup () {
   func_debug_setup_return_test () {
@@ -101,6 +107,13 @@ func_debug_setup () {
   echo "Testing file field count..."
   func_compare_data_field_count_to_rrd_gauge_count
   func_debug_setup_return_test $?
+
+  echo "Testing that file is a valid rrd file..."
+  func_check_file_is_rrd "${datafile}"
+  if ! [ "$?" == "0" ]; then
+    echo "Test failed. '${datafile}' is not a valid rrd file. You may need to delete it and run this script again"
+    exit 1
+  fi
 
   echo "Daignostics didn't find anything wrong."
 }
