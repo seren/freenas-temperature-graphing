@@ -115,7 +115,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -n "$verbose" ] && set -o xtrace
+if [ -n "$debug" ]; then
+  set -o xtrace
+  verbose=1
+fi
 
 [ -n "$help" ] && func_usage && exit 0
 
