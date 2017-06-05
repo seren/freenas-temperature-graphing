@@ -76,8 +76,8 @@ func_compare_data_field_count_to_rrd_gauge_count () {
   fi
   gauges_in_file=$(${RRDTOOL} info ${datafile} | grep -c 'type = "GAUGE"')
   colons_from_data="${data//[^:]}"
-  fields_in_data="${#data}"
-  if [ "${gauges_in_file}" == "${fields_in_data}" ]; then
+  fields_in_data=$(( ${#colons_from_data} + 1 ))
+  if ! [ "${gauges_in_file}" == "${fields_in_data}" ]; then
     echo "The number of fields in the rrd file (${gauges_in_file}) does not match the number of fields supplied (${fields_in_data})"
     echo "You may need to delete the rrd file and try again"
     return 1
