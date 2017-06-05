@@ -20,6 +20,7 @@
 
 
 RRDTOOL=/usr/local/bin/rrdtool
+SCRIPTVERSION="1.0"
 
 # Helpful usage message
 func_usage () {
@@ -79,7 +80,9 @@ func_test_chmod () {
   } || {  # catch
     echo ''
     echo "Error: Couldn't use chmod in /tmp. Is the filesystem a Windows filesystem?"
-    rm "/tmp/chmodtest_${TEMPFILENAME}"
+    rm -f "/tmp/chmodtest_${TEMPFILENAME}"
+    echo "Permissions in ${/tmp}:"
+    ls -lL /tmp | cut -d' ' -f 1
     return 1
   }
   rm -f "/tmp/chmodtest_${TEMPFILENAME}"
@@ -96,7 +99,9 @@ func_test_chmod () {
   } || {  # catch
     echo ''
     echo "Error: Couldn't use chmod in ${dir}. Is the filesystem a Windows filesystem?"
-    rm "${dir}/chmodtest_${TEMPFILENAME}"
+    rm -f "${dir}/chmodtest_${TEMPFILENAME}"
+    echo "Permissions in ${dir}:"
+    ls -lL "${dir}" | cut -d' ' -f 1
     return 1
   }
   rm -f "${dir}/chmodtest_${TEMPFILENAME}"
@@ -133,6 +138,8 @@ func_debug_setup () {
       exit 1
     fi
   }
+
+  echo "Script version: ${SCRIPTVERSION}"
 
   echo "Testing file permissions..."
   func_test_writable "${datafile}"
