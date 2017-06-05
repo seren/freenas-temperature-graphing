@@ -32,7 +32,7 @@ runs from.
 
 Usage $0 [-v] [-d] [-h] output-filename
 
--v | --verbos  Enables verbose output
+-v | --verbose   Enables verbose output
 -d | --debug   Outputs each line of the script as it executes (turns on xtrace)
 -h | --help    Displays this message
 
@@ -68,6 +68,40 @@ func_test_writable () {
   }
 }
 
+# Checks we can use chmod
+func_test_chmod () {
+  TEMPFILENAME=$(dd if=/dev/urandom bs=300 count=1 status=noxfer 2>/dev/null | sha256)
+
+  # Test that chmod works in /tmp
+  { # try
+    touch "/tmp/chmodtest_${TEMPFILENAME}"
+    chmod 600 "/tmp/chmodtest_${TEMPFILENAME}"
+  } || {  # catch
+    echo ''
+    echo "Error: Couldn't use chmod in /tmp. Is the filesystem a Windows filesystem?"
+    rm "/tmp/chmodtest_${TEMPFILENAME}"
+    return 1
+  }
+  rm -f "/tmp/chmodtest_${TEMPFILENAME}"
+
+  dir=${1%/*}
+  # If it doesn't exist, exit with a non-error code
+  if ! [ -d "${dir}" ]; then
+    echo "'${1}' doesn't exist"
+    return 0
+  fi
+  { # try
+    touch "${dir}/chmodtest_${TEMPFILENAME}"
+    chmod 600 "${dir}/chmodtest_${TEMPFILENAME}"
+  } || {  # catch
+    echo ''
+    echo "Error: Couldn't use chmod in ${dir}. Is the filesystem a Windows filesystem?"
+    rm "${dir}/chmodtest_${TEMPFILENAME}"
+    return 1
+  }
+  rm -f "${dir}/chmodtest_${TEMPFILENAME}"
+}
+
 # Checks whether the rrd file and the data variable have matching number of fields
 func_compare_data_field_count_to_rrd_gauge_count () {
   if [ -z "${data}" ]; then
@@ -82,7 +116,7 @@ func_compare_data_field_count_to_rrd_gauge_count () {
     echo "You may need to delete the rrd file and try again"
     return 1
   fi
-  return 0
+ return 0
 }
 
 # Does rrdtool barf when trying to parse the data file?
@@ -102,6 +136,10 @@ func_debug_setup () {
 
   echo "Testing file permissions..."
   func_test_writable "${datafile}"
+  func_debug_setup_return_test $?
+
+  echo "Testing chmod..."
+  func_test_chmod "${datafile}"
   func_debug_setup_return_test $?
 
   echo "Testing file field count..."
@@ -208,6 +246,14 @@ else
   echo "Rrdtool arguments:  ${rrdarg}"
   echo ${RRDTOOL} create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
   ${RRDTOOL} create ${datafile} --step ${timespan} ${rrdarg} RRA:MAX:0.5:1:3000
+  if ! [ $? == 0 ]; then
+    echo "ERROR: Couldn't initialize ${datafile}. Running diagnostics..."
+    func_debug_setup
+    exit 1
+  else
+    [ -n "$verbose" ] && echo "Initialized datafile"
+    exit 0
+  fi
 fi
 
 
