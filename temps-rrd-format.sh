@@ -23,7 +23,7 @@ temperatures in a format rrdtool can consume.
 
 Usage $0 [-v] [-d] [-h]
 
--v | --verbos  Enables verbose output
+-v | --verbose  Enables verbose output
 -d | --debug   Outputs each line of the script as it executes (turns on xtrace)
 -h | --help    Displays this message
 '
