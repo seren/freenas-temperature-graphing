@@ -65,11 +65,15 @@ sep=':'
 numcpus=$(/sbin/sysctl -n hw.ncpu)
 # Get drive device names
 drivedevs=
-for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/da/')) print $i }' ); do
-  drivedevs="${drivedevs} ${i}"
+for i in $(/sbin/sysctl -n kern.disks | grep da); do
+  # Sanity check that the drive will return a temperature (we don't want to include non-SMART usb devices)
+  DevTemp=`/usr/local/sbin/smartctl -a /dev/"$i" | awk '/Temperature_C/{print $10}'`
+  if [ -n "$DevTemp" ]; then
+    drivedevs="${drivedevs} ${i}"
+    [ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"
+  fi
 done
 [ -n "$verbose" ] && echo "numcpus: ${numcpus}"
-[ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"
 
 # Get CPU temperatures
 data=
@@ -79,8 +83,8 @@ for (( i=0; i < ${numcpus}; i++ )); do
 done
 # Get drive temperatures
 for i in ${drivedevs}; do
-  DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | grep '194 *Temperature_Celsius' | awk '{print $10}'`;
-  if ! [[ "$DevTemp" == "" ]]; then
+  DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | awk '/Temperature_C/{print $10}'`;
+  if [ -n "$DevTemp" ]; then
     data="${data}${sep}${DevTemp}"
   fi
 done
