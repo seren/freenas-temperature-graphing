@@ -19,6 +19,15 @@
 # set -o nounset
 
 
+# When this script is executed as a FreeNAS cron job, it is executed with $PWD   
+# set to /root. Because it can be installed in any arbitrary directory, we
+# must use dirname to find what to include in $PATH. Unless make or pkgng can
+# be used to install freenas-temperature-graphing, we must live with this 
+# unfortunate hack.
+PATH="$PATH:$(dirname $0)"
+
+source rrd-lib.sh
+
 # Helpful usage message
 func_usage () {
   echo "
@@ -105,47 +114,9 @@ CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 outputprefix=${datafile%.*}  # strip extension
 outputprefix=${outputprefix##*/}   # extract filename
 
-# Get CPU numbers
-numcpus=$(/sbin/sysctl -n hw.ncpu)
-# Get drive device names
-drivedevs=
-for i in $(/sbin/sysctl -n kern.disks | grep da); do
-  # Sanity check that the drive will return a temperature (we don't want to include non-SMART usb devices)
-  DevTemp=$(/usr/local/sbin/smartctl -a /dev/"${i}" | awk '/Temperature_C/{print $10}');
-  if [ -n "$DevTemp" ]; then
-    drivedevs="${drivedevs} ${i}"
-    [ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"
-  fi
-done
-[ -n "$verbose" ] && echo "numcpus: ${numcpus}"
+get_devices
 
 title="Temps"
-
-
-######################################
-# Script functions
-######################################
-write_graph_to_disk ()
-{
-  /usr/local/bin/rrdtool graph "${CWD}/${outputprefix}-${outputfilename}.png" \
-  -w 785 -h 151 -a PNG \
-  --start end-"${timespan}" --end now \
-  --font DEFAULT:7: \
-  --title "${title}" \
-  --watermark "`date`" \
-  --vertical-label "Celcius" \
-  --right-axis-label "Celcius" \
-  ${guidrule} \
-  ${defsandlines} \
-  --right-axis 1:0 \
-  --alt-autoscale \
-  --lower-limit ${MINGRAPHTEMP} \
-  --upper-limit ${MAXGRAPHTEMP} \
-  --rigid > /dev/null
-  # "HRULE:${SAFETEMPLINE}#FF0000:Max safe temp - ${SAFETEMPLINE}"
-  # "HRULE:${SAFETEMPLINE}#FF0000:Max-${SAFETEMPLINE}"
-}
-
 
 
 ######################################
