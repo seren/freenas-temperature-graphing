@@ -16,15 +16,6 @@ set -o errexit
 set -o nounset
 
 
-# When this script is executed as a FreeNAS cron job, it is executed with $PWD   
-# set to /root. Because it can be installed in any arbitrary directory, we
-# must use dirname to find what to include in $PATH. Unless make or pkgng can
-# be used to install freenas-temperature-graphing, we must live with this 
-# unfortunate hack.
-PATH="$PATH:$(dirname $0)"
-
-source rrd-lib.sh
-
 # Helpful usage message
 func_usage () {
   echo ' This script gathers and outputs the CPU and drive
@@ -68,6 +59,12 @@ if [ "$(id -u)" != "0" ]; then
   exit 1
 fi
 
+# Get current working directory
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+[ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
+
+# Load common functions (temperature retrieval, device enumeration, etc)
+. "${CWD}/rrd-lib.sh"
 
 get_devices
 get_temperatures

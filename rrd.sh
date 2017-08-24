@@ -22,14 +22,6 @@
 RRDTOOL=/usr/local/bin/rrdtool
 SCRIPTVERSION="1.0"
 
-# When this script is executed as a FreeNAS cron job, it is executed with $PWD
-# set to /root. Because it can be installed in any arbitrary directory, we
-# must use dirname to find what to include in $PATH. Unless make or pkgng can
-# be used to install freenas-temperature-graphing, we must live with this
-# unfortunate hack.
-PATH="$PATH:$(dirname $0)"
-
-source rrd-lib.sh
 
 # Helpful usage message
 func_usage () {
@@ -97,6 +89,9 @@ fi
 # Get current working directory
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
+
+# Load common functions (temperature retrieval, device enumeration, etc)
+. "${CWD}/rrd-lib.sh"
 
 
 # If the rrdtool database exists, make sure it's writable. Otherwise create it
