@@ -69,7 +69,6 @@ fi
 # Debugging info
 [ -n "$verbose" ] && echo "Rrdtool database filename: ${datafile}"
 
-# Sleep to give time for the data-collection script to finish (if we're running non-interactively)
 # Get current working directory
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
@@ -77,6 +76,9 @@ CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Load common functions (temperature retrieval, device enumeration, etc)
 . "${CWD}/rrd-lib.sh"
 
+# Sleep to give time for the data-collection script to finish (if we're
+# running non-interactively). This prevents race conditions in case this and
+# the data-collection script were launched from cron at the same time.
 if [ -v PS1 ]; then
   sleep 5
 fi

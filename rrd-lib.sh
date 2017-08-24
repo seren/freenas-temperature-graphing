@@ -3,11 +3,14 @@
 ######################################
 
 # AWK program for extracting temperature data
+# Get the temperature (column 10) from lines begining with SMART attribute
+# 190 or 194, giving precedence to 190 in the case that both exist. If neither
+# one exists, output nothing.
 GETTEMP=$(mktemp)
 cat <<'EOF' > $GETTEMP
-BEGIN         { attr=0; temp=0 }
+BEGIN         { attr=0; temp=-99 }
 $1 ~ /19[04]/ { if (attr != "194") { attr=$1; temp=$10 } }
-END           { print temp }
+END           { if (temp != "-99") print temp }
 EOF
 trap "{ rm $GETTEMP; }" EXIT
 
