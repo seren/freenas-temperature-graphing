@@ -27,9 +27,14 @@ as input, this script uses rrdtool to graph the data.
 
 Usage $0 [-v] [-d] [-h] output-filename
 
--v | --verbos  Enables verbose output
--d | --debug   Outputs each line of the script as it executes (turns on xtrace)
--h | --help    Displays this message
+-v | --verbose  Enables verbose output
+-d | --debug    Outputs each line of the script as it executes (turns on xtrace)
+-h | --help     Displays this message
+
+Options for ESXi:
+--platform "esxi"                  Indicates that we will use ESXi tools to retrieve CPU count
+--ipmitool_username <USERNAME>     Required: Username to use when connecting to BMC
+--ipmitool_address  <BMC_ADDRESS>  Required: BMC ip address to connect to
 
 Note: The filename must be in the following format: temps-Xmin.rdd
   where X is the minute interval between readings.
@@ -49,14 +54,29 @@ while [ $# -gt 0 ]; do
     -h|--help)  help=1;                     shift 1 ;;
     -v|--verbose) verbose=1;                shift 1 ;;
     -d|--debug) debug=1;                    shift 1 ;;
+    --platform) PLATFORM=$2;                shift 2 ;;
+    --ipmitool_username) USERNAME=$2;       shift 2 ;;
+    --ipmitool_address) BMC_ADDRESS=$2;     shift 2 ;;
     -*)         echo "$0: Unrecognized option: $1 (try --help)" >&2; exit 1 ;;
     *)          datafile=$1;                shift 1; break ;;
   esac
 done
 
-[ -n "$verbose" ] && set -o xtrace
+[ -n "$debug" ] && set -o xtrace
 
 [ -n "$help" ] && func_usage && exit 0
+
+case "${PLATFORM}" in
+  esxi)
+    [ -n "$verbose" ] && echo "Platform is set to '${PLATFORM}'. Username is '${USERNAME} and ip is '${BMC_ADDRESS}'"
+    [ -z "$USERNAME" ] && echo "You need to to provide --ipmitool_username with an argument" && exit 1
+    [ -z "$BMC_ADDRESS" ] && echo "You need to to provide --ipmitool_address with an argument" && exit 1
+    args="${args} --platform ${PLATFORM} --ipmitool_username ${USERNAME} --ipmitool_address ${BMC_ADDRESS}"
+    ;;
+  *)
+    args=''
+    ;;
+esac
 
 # Check that we were supplied a db filename
 if [ -z "${datafile}" ]; then
@@ -74,6 +94,7 @@ CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
 
 # Load common functions (temperature retrieval, device enumeration, etc)
+# shellcheck source=./rrd-lib.sh
 . "${CWD}/rrd-lib.sh"
 
 # Sleep to give time for the data-collection script to finish (if we're
@@ -160,7 +181,7 @@ outputfilename=cpus
 defsandlines=
 title="Temperature: All CPUs, ${interval} minute interval"
 guidrule=
-for (( i=0; i < ${numcpus}; i++ )); do
+for (( i=0; i < numcpus; i++ )); do
   [ -n "$verbose" ] && echo "cpu: ${i}"
   (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
   defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
