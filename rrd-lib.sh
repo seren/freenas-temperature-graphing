@@ -30,6 +30,7 @@ get_devices () {
 
 get_temperatures () {
   # Get CPU temperatures
+  sep=':'
   data=
   for (( i=0; i < ${numcpus}; i++ )); do
     t=`/sbin/sysctl -n dev.cpu.$i.temperature`

@@ -68,7 +68,6 @@ if [ "$(id -u)" != "0" ]; then
   exit 1
 fi
 
-sep=':'
 
 get_devices
 get_temperatures
