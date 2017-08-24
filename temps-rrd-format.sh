@@ -16,6 +16,15 @@ set -o errexit
 set -o nounset
 
 
+# When this script is executed as a FreeNAS cron job, it is executed with $PWD   
+# set to /root. Because it can be installed in any arbitrary directory, we
+# must use dirname to find what to include in $PATH. Unless make or pkgng can
+# be used to install freenas-temperature-graphing, we must live with this 
+# unfortunate hack.
+PATH="$PATH:$(dirname $0)"
+
+source rrd-lib.sh
+
 # Helpful usage message
 func_usage () {
   echo ' This script gathers and outputs the CPU and drive
@@ -61,30 +70,8 @@ fi
 
 sep=':'
 
-# Get CPU ids
-numcpus=$(/sbin/sysctl -n hw.ncpu)
-# Get drive device names
-drivedevs=
-for i in $(/sbin/sysctl -n kern.disks | awk '{for (i=NF; i!=0 ; i--) if(match($i, '/da/')) print $i }' ); do
-  drivedevs="${drivedevs} ${i}"
-done
-[ -n "$verbose" ] && echo "numcpus: ${numcpus}"
-[ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"
-
-# Get CPU temperatures
-data=
-for (( i=0; i < ${numcpus}; i++ )); do
-  t=`/sbin/sysctl -n dev.cpu.$i.temperature`
-  data=${data}${sep}${t%.*}  # Append the temperature to the data string, removing anything after the decimal
-done
-# Get drive temperatures
-for i in ${drivedevs}; do
-  DevTemp=`/usr/local/sbin/smartctl -a /dev/$i | grep '194 *Temperature_Celsius' | awk '{print $10}'`;
-  if ! [[ "$DevTemp" == "" ]]; then
-    data="${data}${sep}${DevTemp}"
-  fi
-done
-[ -n "$verbose" ] && echo "Raw data: ${data}"
+get_devices
+get_temperatures
 
 # Strip any leading, trailing, or duplicate colons
 [ -n "$verbose" ] && echo "Cleaned up data:"
