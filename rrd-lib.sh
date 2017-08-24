@@ -19,7 +19,7 @@ get_devices () {
   numcpus=$(/sbin/sysctl -n hw.ncpu)
   # Get drive device names
   drivedevs=
-  for i in $(/sbin/sysctl -n kern.disks); do
+  for i in $(/sbin/sysctl -n kern.disks | awk '{ for (i=NF; i>1; i--) printf("%s ",$i); print $1; }'); do
     # Sanity check that the drive will return a temperature (we don't want to include non-SMART usb devices)
     DevTemp=$(/usr/local/sbin/smartctl -a /dev/"${i}" | awk -f $GETTEMP)
     if [ -n "$DevTemp" ]; then
