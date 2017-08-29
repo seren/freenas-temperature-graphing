@@ -164,7 +164,7 @@ timespan=$((interval * 86400))
 # title="Temperature: All CPUs and Drives, ${interval} minute interval"
 # guidrule=
 # defsandlines=
-# for (( i=0; i < ${numcpus}; i++ )); do
+# for (( i=0; i < numcpus; i++ )); do
 #   (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
 #   defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
 # done
@@ -216,12 +216,11 @@ write_graph_to_disk
 # done
 
 # # Output graphs of each drive
-# for i in ${drivedevs}; do
-#   drivenum=${i#ada*}
-#   defsandlines="DEF:${i}=${datafile}:${i}:MAX LINE1:${i}#000000:\"${i}\""
-#   outputfilename=drive-${i}
+# for drdev in ${drivedevs}; do
+#   defsandlines="DEF:${drdev}=${datafile}:${i}:MAX LINE1:${i}#000000:\"${i}\""
+#   outputfilename=drive-${drdev}
 #   guidrule="HRULE:${SAFETEMPLINE}#FF0000"
-#   title="Temperature: Drive ${i}, ${interval} minute interval"
+#   title="Temperature: Drive ${drdev}, ${interval} minute interval"
 #   write_graph_to_disk
 # done
 
