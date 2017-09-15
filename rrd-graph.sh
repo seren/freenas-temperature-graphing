@@ -165,12 +165,12 @@ timespan=$((interval * 86400))
 # defsandlines=
 # for (( i=0; i < ${numcpus}; i++ )); do
 #   (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
-#   defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}${LINECOLORS[$colorindex]}:\"cpu${i}\""
+#   defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
 # done
 # i=0
 # for drdev in ${drivedevs}; do
 #   (( colorindex = ( i + numcpus ) % NUMCOLORS )) # Don't reuse the cpu colors unless we have to
-#   defsandlines="${defsandlines} DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}${LINECOLORS[$colorindex]}:\"${drdev}\""
+#   defsandlines="${defsandlines} DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#${LINECOLORS[$colorindex]}:${drdev}"
 #   (( i = i + 1 ))
 # done
 # write_graph_to_disk
