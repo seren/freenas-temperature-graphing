@@ -22,11 +22,11 @@
 ######################################
 # Script variables
 ######################################
-# These are arbitrary
-MAXGRAPHTEMP=70
-MINGRAPHTEMP=20
-SAFETEMPMAX=46
-SAFETEMPMIN=37
+# These use external environment variables if set, otherwise use arbitrary default values
+MAXGRAPHTEMP=${MAXGRAPHTEMP:-70}
+MINGRAPHTEMP=${MINGRAPHTEMP:-20}
+SAFETEMPMAX=${SAFETEMPMAX:-46}
+SAFETEMPMIN=${SAFETEMPMIN:-37}
 
 # # Different strokes for different folks
 # LINECOLORS=( 0000FF 4573A7 AA4644 89A54E 71588F 006060 0f4880 )
