@@ -217,7 +217,7 @@ write_graph_to_disk
 
 # # Output graphs of each drive
 # for drdev in ${drivedevs}; do
-#   defsandlines="DEF:${drdev}=${datafile}:${i}:MAX LINE1:${i}#000000:\"${i}\""
+#   defsandlines="DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#000000:\"${drdev}\""
 #   outputfilename=drive-${drdev}
 #   guidrule="HRULE:${SAFETEMPLINE}#FF0000"
 #   title="Temperature: Drive ${drdev}, ${interval} minute interval"
