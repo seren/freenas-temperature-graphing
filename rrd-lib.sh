@@ -1,6 +1,7 @@
 ######################################
 # Common
 ######################################
+RRDSCRIPTLIBVERSION=1.0
 
 # AWK program for extracting temperature data
 # Get the temperature (column 10) from lines begining with SMART attribute
@@ -163,7 +164,9 @@ func_debug_setup () {
     fi
   }
 
-  echo "Script version: ${SCRIPTVERSION}"
+  echo "rrd.sh version: ${RRDSCRIPTVERSION}"
+  echo "rrd-graph.sh version: ${RRDGRAPHSCRIPTVERSION}"
+  echo "rrd-lib.sh version: ${RRDSCRIPTLIBVERSION}"
 
   echo "Testing file permissions..."
   func_test_writable "${datafile}"

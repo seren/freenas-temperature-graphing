@@ -41,6 +41,7 @@ NUMCOLORS=${#LINECOLORS[@]}
 colorindex=0
 
 #######################################
+RRDGRAPHSCRIPTVERSION=1.0
 
 # Usage message
 func_usage () {
@@ -48,7 +49,7 @@ func_usage () {
 Given an rrd file of the system cpu and drive temperatures
 as input, this script uses rrdtool to graph the data.
 
-Usage $0 [-v] [-d] [-h] [--platform "esxi"] output-filename
+Usage '"$0"' [-v] [-d] [-h] [--platform "esxi"] output-filename
 
 -v | --verbose  Enables verbose output
 -d | --debug    Outputs each line of the script as it executes (turns on xtrace)
@@ -64,8 +65,10 @@ Note: The filename must be in the following format: temps-Xmin.rdd
   ex: 'temps-10min.rrd' would contain readings every 10 minutes
 
 Example:
-  $0 /mnt/mainpool/temperatures/temps-5min.rrd
+  '"$0"' /mnt/mainpool/temperatures/temps-5min.rrd
+
 '
+echo "Script version: ${RRDGRAPHSCRIPTVERSION}"
 }
 
 # Process command line args
@@ -107,6 +110,8 @@ if [ -n "$debug" ]; then
 fi
 
 [ -n "$help" ] && func_usage && exit 0
+
+[ -n "$verbose" ] && echo "Script version: ${RRDGRAPHSCRIPTVERSION}"
 
 case "${PLATFORM}" in
   esxi)
@@ -150,14 +155,9 @@ if [ -v PS1 ]; then
   sleep 5
 fi
 
-
-# Get current working directory
-CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-[ -n "$verbose" ] && echo "Current working directory is: ${CWD}"
-
 # rrdtool database file
 outputprefix=${datafile%.*}  # strip extension
-outputprefix=${outputprefix##*/}   # extract filename
+outputprefix=${outputprefix##*/}   # strip leading path
 
 get_devices
 

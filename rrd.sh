@@ -23,6 +23,7 @@
 # Script variables
 ######################################
 RRDTOOL=/usr/local/bin/rrdtool
+RRDSCRIPTVERSION=1.0
 
 #######################################
 
@@ -35,7 +36,7 @@ to actually get the data in a format it can use.
 It writes the data files to the same directory it
 runs from.
 
-Usage $0 [-v] [-d] [-h] [--platform "esxi"] output-filename
+Usage '"$0"' [-v] [-d] [-h] [--platform "esxi"] output-filename
 
 -v | --verbose   Enables verbose output
 -d | --debug   Outputs each line of the script as it executes (turns on xtrace)
@@ -51,8 +52,10 @@ Note: The filename must be in the following format: temps-Xmin.rdd
   ex: "temps-10min.rrd" would contain readings every 10 minutes
 
 Example:
-  $0 /mnt/mainpool/temperatures/temps-5min.rrd
+  '"$0"' /mnt/mainpool/temperatures/temps-5min.rrd
+
 '
+echo "Script version: ${RRDSCRIPTVERSION}"
 }
 
 # Process command line args
@@ -94,6 +97,8 @@ if [ -n "$debug" ]; then
 fi
 
 [ -n "$help" ] && func_usage && exit 0
+
+[ -n "$verbose" ] && echo "Script version: ${RRDSCRIPTVERSION}"
 
 case "${PLATFORM}" in
   esxi)
