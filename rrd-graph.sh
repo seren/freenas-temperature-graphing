@@ -219,7 +219,7 @@ write_graph_to_disk
 # for drdev in ${drivedevs}; do
 #   defsandlines="DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#000000:\"${drdev}\""
 #   outputfilename=drive-${drdev}
-#   guidrule="HRULE:${SAFETEMPLINE}#FF0000"
+#   guidrule="HRULE:${SAFETEMPMIN}#0000FF:Min-safe-temp-mechanical:dashes HRULE:${SAFETEMPMAX}#FF0000:Max-safe-temp-mechanical:dashes"
 #   title="Temperature: Drive ${drdev}, ${interval} minute interval"
 #   write_graph_to_disk
 # done
