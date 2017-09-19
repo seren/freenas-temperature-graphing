@@ -72,7 +72,7 @@ Extras:
 -------
 
 The rrd-graph.sh script contains code to graph each device individually as well
-as all together. Just uncomment the appropriate blocks.
+as all together. Just uncomment the function call at the bottom of `rrd-graph.sh`.
 
 The colors can be adjusted at the top of the `rrd-graph.sh` file.
 

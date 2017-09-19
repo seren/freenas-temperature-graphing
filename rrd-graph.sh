@@ -182,69 +182,88 @@ fi
 timespan=$((interval * 86400))
 [ -n "$verbose" ] && echo "Graph timespan seconds: ${timespan}"
 
-# # Graph all cpus and drives together
-# outputfilename=everything
-# title="Temperature: All CPUs and Drives, ${interval} minute interval"
-# guidrule=
-# defsandlines=
-# for (( i=0; i < numcpus; i++ )); do
-#   (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
-#   defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
-# done
-# i=0
-# for drdev in ${drivedevs}; do
-#   (( colorindex = ( i + numcpus ) % NUMCOLORS )) # Don't reuse the cpu colors unless we have to
-#   defsandlines="${defsandlines} DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#${LINECOLORS[$colorindex]}:${drdev}"
-#   (( i = i + 1 ))
-# done
-# write_graph_to_disk
+# Graph all cpus and drives together
+func_graph_everything_together () {
+  outputfilename=everything
+  title="Temperature: All CPUs and Drives, ${interval} minute interval"
+  guidrule=
+  defsandlines=
+  for (( i=0; i < numcpus; i++ )); do
+    (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
+    defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
+  done
+  i=0
+  for drdev in ${drivedevs}; do
+    (( colorindex = ( i + numcpus ) % NUMCOLORS )) # Don't reuse the cpu colors unless we have to
+    defsandlines="${defsandlines} DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#${LINECOLORS[$colorindex]}:${drdev}"
+    (( i = i + 1 ))
+  done
+  write_graph_to_disk
+}
 
 # Output a combined graph of all cpus
-[ -n "$verbose" ] && echo "Output a combined graph of all cpus"
-outputfilename=cpus
-defsandlines=
-title="Temperature: All CPUs, ${interval} minute interval"
-guidrule=
-for (( i=0; i < numcpus; i++ )); do
-  [ -n "$verbose" ] && echo "cpu: ${i}"
-  (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
-  defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
-done
-[ -n "$verbose" ] && echo "Definitions and lines: ${defsandlines}"
-write_graph_to_disk
+func_graph_cpus_together () {
+  [ -n "$verbose" ] && echo "Output a combined graph of all cpus"
+  outputfilename=cpus
+  defsandlines=
+  title="Temperature: All CPUs, ${interval} minute interval"
+  guidrule=
+  for (( i=0; i < numcpus; i++ )); do
+    [ -n "$verbose" ] && echo "cpu: ${i}"
+    (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
+    defsandlines="${defsandlines} DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#${LINECOLORS[$colorindex]}:cpu${i}"
+  done
+  [ -n "$verbose" ] && echo "Definitions and lines: ${defsandlines}"
+  write_graph_to_disk
+}
 
 # Output a combined graph of all drives
-[ -n "$verbose" ] && echo "Output a combined graph of all drives"
-outputfilename=drives
-defsandlines=
-title="Temperature: All Drives, ${interval} minute interval"
-guidrule="HRULE:${SAFETEMPMIN}#0000FF:Min-safe-temp-mechanical:dashes HRULE:${SAFETEMPMAX}#FF0000:Max-safe-temp-mechanical:dashes"
-i=0
-for drdev in ${drivedevs}; do
-  [ -n "$verbose" ] && echo "drive device: ${drdev}"
-  (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
-  defsandlines="${defsandlines} DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#${LINECOLORS[$colorindex]}:${drdev}"
-  (( i = i + 1 ))
-done
-[ -n "$verbose" ] && echo "Definitions and lines: ${defsandlines}"
-write_graph_to_disk
+func_graph_drives_together () {
+  [ -n "$verbose" ] && echo "Output a combined graph of all drives"
+  outputfilename=drives
+  defsandlines=
+  title="Temperature: All Drives, ${interval} minute interval"
+  guidrule="HRULE:${SAFETEMPMIN}#0000FF:Min-safe-temp-mechanical:dashes HRULE:${SAFETEMPMAX}#FF0000:Max-safe-temp-mechanical:dashes"
+  i=0
+  for drdev in ${drivedevs}; do
+    [ -n "$verbose" ] && echo "drive device: ${drdev}"
+    (( colorindex = i % NUMCOLORS )) # If we run out of colors, start over
+    defsandlines="${defsandlines} DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#${LINECOLORS[$colorindex]}:${drdev}"
+    (( i = i + 1 ))
+  done
+  [ -n "$verbose" ] && echo "Definitions and lines: ${defsandlines}"
+  write_graph_to_disk
+}
 
-# # Output graphs of each cpu
-# for (( i=0; i < ${numcpus}; i++ )); do
-#   defsandlines="DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#000000:\"cpu${i}\""
-#   outputfilename=cpu${i}
-#   title="Temperature: CPU ${i}, ${interval} minute interval"
-#   guidrule=
-#   write_graph_to_disk
-# done
+# Output graphs of each cpu
+func_graph_cpus_separately () {
+  for (( i=0; i < ${numcpus}; i++ )); do
+    defsandlines="DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#000000:\"cpu${i}\""
+    outputfilename=cpu${i}
+    title="Temperature: CPU ${i}, ${interval} minute interval"
+    guidrule=
+    write_graph_to_disk
+  done
+}
 
-# # Output graphs of each drive
-# for drdev in ${drivedevs}; do
-#   defsandlines="DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#000000:\"${drdev}\""
-#   outputfilename=drive-${drdev}
-#   guidrule="HRULE:${SAFETEMPMIN}#0000FF:Min-safe-temp-mechanical:dashes HRULE:${SAFETEMPMAX}#FF0000:Max-safe-temp-mechanical:dashes"
-#   title="Temperature: Drive ${drdev}, ${interval} minute interval"
-#   write_graph_to_disk
-# done
+# Output graphs of each drive
+func_graph_drives_separately () {
+  for drdev in ${drivedevs}; do
+    defsandlines="DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#000000:${drdev}"
+    outputfilename=drive-${drdev}
+    guidrule="HRULE:${SAFETEMPMIN}#0000FF:Min-safe-temp-mechanical:dashes HRULE:${SAFETEMPMAX}#FF0000:Max-safe-temp-mechanical:dashes"
+    title="Temperature: Drive ${drdev}, ${interval} minute interval"
+    write_graph_to_disk
+  done
+}
+
+############
+# What graphs to output. Uncomment the ones you want
+
+# func_graph_everything_together
+func_graph_cpus_together
+func_graph_drives_together
+# func_graph_cpus_separately
+# func_graph_drives_separately
 
 
