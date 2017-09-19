@@ -7,7 +7,7 @@
 # runs from.
 #
 # Author: Seren Thompson
-# Date: 2017-04-24
+# Date: 2017-09-19
 # Website: https://github.com/seren/freenas-temperature-graphing
 #####
 
@@ -19,11 +19,14 @@
 # set -o nounset
 
 
+######################################
+# Script variables
+######################################
 RRDTOOL=/usr/local/bin/rrdtool
-SCRIPTVERSION="1.0"
 
+#######################################
 
-# Helpful usage message
+# Usage message
 func_usage () {
   echo '
 This script generates and updates an rrdtool database
@@ -32,7 +35,7 @@ to actually get the data in a format it can use.
 It writes the data files to the same directory it
 runs from.
 
-Usage $0 [-v] [-d] [-h] output-filename
+Usage $0 [-v] [-d] [-h] [--platform "esxi"] output-filename
 
 -v | --verbose   Enables verbose output
 -d | --debug   Outputs each line of the script as it executes (turns on xtrace)
@@ -57,17 +60,31 @@ args=''
 help=
 verbose=
 debug=
+datafile=
 PLATFORM=default
 while [ $# -gt 0 ]; do
   case $1 in
     -h|--help)  help=1;                     shift 1 ;;
     -v|--verbose) verbose=1;                shift 1 ;;
     -d|--debug) debug=1;                    shift 1 ;;
-    --platform) PLATFORM=$2;                shift 2 ;;
-    --ipmitool_username) USERNAME=$2;       shift 2 ;;
-    --ipmitool_address) BMC_ADDRESS=$2;     shift 2 ;;
-    -*)         echo "$0: Unrecognized option: $1 (try --help)" >&2; exit 1 ;;
-    *)          datafile=$1;                     shift 1; break ;;
+    --platform) PLATFORM=$2;                shift 1; shift 1 ;;
+    --ipmitool_username) USERNAME=$2;       shift 1; shift 1 ;;
+    --ipmitool_address) BMC_ADDRESS=$2;     shift 1; shift 1 ;;
+    -*)
+      echo "$0: Unrecognized option: $1 (try --help)" >&2
+      exit 1
+      ;;
+    *)
+      if [ -n "$datafile" ]; then
+        echo "You can only specify one output-filename. You gave these:"
+        echo "${datafile}"
+        echo "$1"
+        exit 1
+      else
+        datafile=$1
+        shift 1
+      fi
+      ;;
   esac
 done
 
@@ -85,8 +102,12 @@ case "${PLATFORM}" in
     [ -z "$BMC_ADDRESS" ] && echo "You need to to provide --ipmitool_address with an argument" && exit 1
     args="${args} --platform ${PLATFORM} --ipmitool_username ${USERNAME} --ipmitool_address ${BMC_ADDRESS}"
     ;;
-  *)
+  default)
     args=''
+    ;;
+  *)
+    echo "Unrecognized platform: '${PLATFORM}'"
+    exit 1
     ;;
 esac
 

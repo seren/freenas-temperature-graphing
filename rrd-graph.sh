@@ -7,7 +7,7 @@
 # ex: "temps-10min.rrd" would contain readings every 10 minutes
 #
 # Author: Seren Thompson
-# Date: 2017-04-24
+# Date: 2017-09-19
 # Website: https://github.com/seren/freenas-temperature-graphing
 #####
 
@@ -42,13 +42,13 @@ colorindex=0
 
 #######################################
 
-# Helpful usage message
+# Usage message
 func_usage () {
-  echo "
+  echo '
 Given an rrd file of the system cpu and drive temperatures
 as input, this script uses rrdtool to graph the data.
 
-Usage $0 [-v] [-d] [-h] output-filename
+Usage $0 [-v] [-d] [-h] [--platform "esxi"] output-filename
 
 -v | --verbose  Enables verbose output
 -d | --debug    Outputs each line of the script as it executes (turns on xtrace)
@@ -65,27 +65,46 @@ Note: The filename must be in the following format: temps-Xmin.rdd
 
 Example:
   $0 /mnt/mainpool/temperatures/temps-5min.rrd
-"
+'
 }
 
 # Process command line args
+args=''
 help=
 verbose=
 debug=
+datafile=
+PLATFORM=default
 while [ $# -gt 0 ]; do
   case $1 in
     -h|--help)  help=1;                     shift 1 ;;
     -v|--verbose) verbose=1;                shift 1 ;;
     -d|--debug) debug=1;                    shift 1 ;;
-    --platform) PLATFORM=$2;                shift 2 ;;
-    --ipmitool_username) USERNAME=$2;       shift 2 ;;
-    --ipmitool_address) BMC_ADDRESS=$2;     shift 2 ;;
-    -*)         echo "$0: Unrecognized option: $1 (try --help)" >&2; exit 1 ;;
-    *)          datafile=$1;                shift 1; break ;;
+    --platform) PLATFORM=$2;                shift 1; shift 1 ;;
+    --ipmitool_username) USERNAME=$2;       shift 1; shift 1 ;;
+    --ipmitool_address) BMC_ADDRESS=$2;     shift 1; shift 1 ;;
+    -*)
+      echo "$0: Unrecognized option: $1 (try --help)" >&2
+      exit 1
+      ;;
+    *)
+      if [ -n "$datafile" ]; then
+        echo "You can only specify one output-filename. You gave these:"
+        echo "${datafile}"
+        echo "$1"
+        exit 1
+      else
+        datafile=$1
+        shift 1
+      fi
+      ;;
   esac
 done
 
-[ -n "$debug" ] && set -o xtrace
+if [ -n "$debug" ]; then
+  set -o xtrace
+  verbose=1
+fi
 
 [ -n "$help" ] && func_usage && exit 0
 
@@ -96,8 +115,12 @@ case "${PLATFORM}" in
     [ -z "$BMC_ADDRESS" ] && echo "You need to to provide --ipmitool_address with an argument" && exit 1
     args="${args} --platform ${PLATFORM} --ipmitool_username ${USERNAME} --ipmitool_address ${BMC_ADDRESS}"
     ;;
-  *)
+  default)
     args=''
+    ;;
+  *)
+    echo "Unrecognized platform: '${PLATFORM}'"
+    exit 1
     ;;
 esac
 

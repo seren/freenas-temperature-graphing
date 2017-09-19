@@ -4,7 +4,7 @@
 # temperatures in a format rrdtool can consume.
 #
 # Author: Seren Thompson
-# Date: 2017-04-24
+# Date: 2017-09-19
 # Website: https://github.com/seren/freenas-temperature-graphing
 #####
 
