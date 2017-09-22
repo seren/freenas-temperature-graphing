@@ -2,8 +2,8 @@ freenas-temperature-graphing
 ============================
 
 Bash scripts to graph FreeNAS CPU and drive temperatures. Graphs are generated
-in the same directory as the scripts (not the web interface). Tested on 9.3 and
-9.10.
+in the same directory as the scripts (not the web interface). Tested on 9.3,
+9.10, and 11.0.
 
  
 
