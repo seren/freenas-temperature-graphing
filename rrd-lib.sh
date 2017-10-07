@@ -200,8 +200,8 @@ write_graph_to_disk () {
   --font DEFAULT:7: \
   --title "${title}" \
   --watermark "`date`" \
-  --vertical-label "Celcius" \
-  --right-axis-label "Celcius" \
+  --vertical-label "Celsius" \
+  --right-axis-label "Celsius" \
   ${guidrule} \
   ${defsandlines} \
   --right-axis 1:0 \
