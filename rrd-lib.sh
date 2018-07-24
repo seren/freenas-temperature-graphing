@@ -37,7 +37,8 @@ get_devices () {
     fi
   done
   [ -n "$verbose" ] && echo "numcpus: ${numcpus}"
-  export numcpus drivedevs
+  export numcpus
+  export drivedevs
 }
 
 get_temperatures () {
