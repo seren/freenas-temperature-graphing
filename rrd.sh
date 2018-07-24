@@ -190,7 +190,7 @@ fi
 [ -n "$verbose" ] && echo "Running script: '${CWD}/temps-rrd-format.sh -v ${args}'"
 [ -n "$verbose" ] && echo ""
 [ -n "$verbose" ] && echo ""
-[ -n "$verbose" ] && "${CWD}/temps-rrd-format.sh" ${args}
+[ -n "$verbose" ] && "${CWD}/temps-rrd-format.sh" -v ${args}
 [ -n "$verbose" ] && echo ""
 [ -n "$verbose" ] && echo ""
 [ -n "$verbose" ] && echo "(running script again non-verbosely)"
