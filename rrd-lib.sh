@@ -20,7 +20,7 @@ get_devices () {
   case "${PLATFORM}" in
     esxi)
       [ -n "$verbose" ] && echo "Platform is set to '${PLATFORM}'. Attempting to retrieve the list of CPUs using ipmitool with username '${USERNAME} and ip ${BMC_ADDRESS}..."
-      numcpus=$(ipmitool -I lanplus -H "${BMC_ADDRESS}" -U "${USERNAME}" -f /root/.ipmi sdr elist all | grep -c -i "cpu.*temp")
+      numcpus=$(ipmitool -I lanplus -H "${BMC_ADDRESS}" -U "${USERNAME}" -f /root/.ipmi sdr elist all | sed -Ene 's/^CPU[^ ]* +Temp +\| .* ([^ ]+) degrees C/\1/p' | wc -l)
       ;;
     *)
       numcpus=$(/sbin/sysctl -n hw.ncpu)
@@ -50,7 +50,7 @@ get_temperatures () {
     case "${PLATFORM}" in
       esxi)
         [ -n "$verbose" ] && echo "Platform is set to '${PLATFORM}'. Attempting to retrieve CPU$((i+1)) temperatures using ipmitool with username '${USERNAME} and ip ${BMC_ADDRESS}..."
-        t=$(ipmitool -I lanplus -H "${BMC_ADDRESS}" -U "${USERNAME}" -f /root/.ipmi sdr elist | sed -Ene 's/^CPU[^ ]+ +Temp +\| .* ([^ ]+) degrees C/\1/p' | sed -n "$((i+1))p")
+        t=$(ipmitool -I lanplus -H "${BMC_ADDRESS}" -U "${USERNAME}" -f /root/.ipmi sdr elist | sed -Ene 's/^CPU[^ ]* +Temp +\| .* ([^ ]+) degrees C/\1/p' | sed -n "$((i+1))p")
         ;;
       *)
         t=$(/sbin/sysctl -n dev.cpu.$i.temperature)
