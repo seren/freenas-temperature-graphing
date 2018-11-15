@@ -34,6 +34,13 @@ get_devices () {
     if [ -n "$DevTemp" ]; then
       drivedevs="${drivedevs} ${i}"
       [ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"
+    else
+      #In case the disk is a SAS/SCSI disk without the default number pattern for Smart output
+      DevTemp=$(/usr/local/sbin/smartctl -a /dev/"${i}" | grep "Current Drive Temperature:" |awk '{print $4}')
+      if [ -n "$DevTemp" ]; then
+        drivedevs="${drivedevs} ${i}"
+        [ -n "$verbose" ] && echo "drivedevs: ${drivedevs}"      
+      fi
     fi
   done
   [ -n "$verbose" ] && echo "numcpus: ${numcpus}"
@@ -62,10 +69,17 @@ get_temperatures () {
     DevTemp=$(/usr/local/sbin/smartctl -a /dev/$i | awk -f $GETTEMP)
     if [ -n "$DevTemp" ]; then
       data="${data}${sep}${DevTemp}"
+      [ -n "$verbose" ] && echo "Raw data: ${data}"
+    else
+      #In case the disk is a SAS/SCSI disk without the default number pattern for Smart output
+      DevTemp=$(/usr/local/sbin/smartctl -a /dev/"${i}" | grep "Current Drive Temperature:" |awk '{print $4}')
+      if [ -n "$DevTemp" ]; then
+        data="${data}${sep}${DevTemp}"
+        [ -n "$verbose" ] && echo "Raw data: ${data}"
+      fi
     fi
   done
-  [ -n "$verbose" ] && echo "Raw data: ${data}"
-  export data
+ export data
 }
 
 ######################################
