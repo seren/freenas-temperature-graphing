@@ -184,17 +184,17 @@ else
   fi
 fi
 
+tempfile=/tmp/$$.temp.rrd.output
+tempargs=""
 # If we run temps-rrd-format.sh in verbose mode, we can't capture the output
 # in a variable. So if verbose is set, we run it twice, once for the user to
 # see and once for the script to grab the output.
-[ -n "$verbose" ] && echo "Running script: '${CWD}/temps-rrd-format.sh -v ${args}'"
+[ -n "$verbose" ] && echo "Running script: '${CWD}/temps-rrd-format.sh -v -o ${tempfile} ${args}'"
 [ -n "$verbose" ] && echo ""
-[ -n "$verbose" ] && echo ""
-[ -n "$verbose" ] && "${CWD}/temps-rrd-format.sh" -v ${args}
-[ -n "$verbose" ] && echo ""
-[ -n "$verbose" ] && echo ""
-[ -n "$verbose" ] && echo "(running script again non-verbosely)"
-data=$("${CWD}/temps-rrd-format.sh" ${args})
+[ -n "$verbose" ] && tempargs=-v
+"${CWD}/temps-rrd-format.sh" ${tempargs} -o ${tempfile} ${args}
+data=$(cat ${tempfile})
+rm $tempfile
 [ -n "$verbose" ] && echo "Data: ${data}"
 [ -n "$verbose" ] && echo ""
 [ -n "$verbose" ] && echo "Updating the db: '${RRDTOOL} update ${datafile} N:${data}'"
