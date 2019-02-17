@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 #####
 # Given an rrd file of the system's cpu and drive temperatures
 # as input, this script uses rrdtool to graph the data.
@@ -23,7 +23,7 @@
 # Script variables
 ######################################
 # These use external environment variables if set, otherwise use arbitrary default values
-MAXGRAPHTEMP=${MAXGRAPHTEMP:-70}
+MAXGRAPHTEMP=${MAXGRAPHTEMP:-50}
 MINGRAPHTEMP=${MINGRAPHTEMP:-20}
 SAFETEMPMAX=${SAFETEMPMAX:-46}
 SAFETEMPMIN=${SAFETEMPMIN:-37}
@@ -40,6 +40,9 @@ LINECOLORS=( 000000 00FF00 0000FF FF0000 01FFFE FFA6FE FFDB66 006401 010067 9500
 NUMCOLORS=${#LINECOLORS[@]}
 colorindex=0
 
+# Keep track of which graphs we generate
+graphs=()
+
 #######################################
 RRDGRAPHSCRIPTVERSION=1.0
 
@@ -49,11 +52,12 @@ func_usage () {
 Given an rrd file of the system cpu and drive temperatures
 as input, this script uses rrdtool to graph the data.
 
-Usage '"$0"' [-v] [-d] [-h] [--platform "esxi"] output-filename
+Usage '"$0"' [-v] [-d] [-h] [--platform "esxi"] [-e "email@address"] output-filename
 
 -v | --verbose  Enables verbose output
 -d | --debug    Outputs each line of the script as it executes (turns on xtrace)
 -h | --help     Displays this message
+-e | --email <email@address>    Send an email after creating graphs
 
 Options for ESXi:
 --platform "esxi"                  Indicates that we will use ESXi tools to retrieve CPU count
@@ -83,6 +87,7 @@ while [ $# -gt 0 ]; do
     -h|--help)  help=1;                     shift 1 ;;
     -v|--verbose) verbose=1;                shift 1 ;;
     -d|--debug) debug=1;                    shift 1 ;;
+    -e|--email) email=$2;                   shift 1; shift 1;;
     --platform) PLATFORM=$2;                shift 1; shift 1 ;;
     --ipmitool_username) USERNAME=$2;       shift 1; shift 1 ;;
     --ipmitool_address) BMC_ADDRESS=$2;     shift 1; shift 1 ;;
@@ -185,6 +190,7 @@ timespan=$((interval * 86400))
 # Graph all cpus and drives together
 func_graph_everything_together () {
   outputfilename=everything
+  graphs+=( $outputfilename )
   title="Temperature: All CPUs and Drives, ${interval} minute interval"
   guidrule=
   defsandlines=
@@ -205,6 +211,7 @@ func_graph_everything_together () {
 func_graph_cpus_together () {
   [ -n "$verbose" ] && echo "Output a combined graph of all cpus"
   outputfilename=cpus
+  graphs+=( $outputfilename )
   defsandlines=
   title="Temperature: All CPUs, ${interval} minute interval"
   guidrule=
@@ -221,6 +228,7 @@ func_graph_cpus_together () {
 func_graph_drives_together () {
   [ -n "$verbose" ] && echo "Output a combined graph of all drives"
   outputfilename=drives
+  graphs+=( $outputfilename )
   defsandlines=
   title="Temperature: All Drives, ${interval} minute interval"
   guidrule="HRULE:${SAFETEMPMIN}#0000FF:Min-safe-temp-mechanical:dashes HRULE:${SAFETEMPMAX}#FF0000:Max-safe-temp-mechanical:dashes"
@@ -240,6 +248,7 @@ func_graph_cpus_separately () {
   for (( i=0; i < ${numcpus}; i++ )); do
     defsandlines="DEF:cpu${i}=${datafile}:cpu${i}:MAX LINE1:cpu${i}#000000:\"cpu${i}\""
     outputfilename=cpu${i}
+    graphs+=( $outputfilename )
     title="Temperature: CPU ${i}, ${interval} minute interval"
     guidrule=
     write_graph_to_disk
@@ -251,10 +260,56 @@ func_graph_drives_separately () {
   for drdev in ${drivedevs}; do
     defsandlines="DEF:${drdev}=${datafile}:${drdev}:MAX LINE1:${drdev}#000000:${drdev}"
     outputfilename=drive-${drdev}
+    graphs+=( $outputfilename )
     guidrule="HRULE:${SAFETEMPMIN}#0000FF:Min-safe-temp-mechanical:dashes HRULE:${SAFETEMPMAX}#FF0000:Max-safe-temp-mechanical:dashes"
     title="Temperature: Drive ${drdev}, ${interval} minute interval"
     write_graph_to_disk
   done
+}
+
+# Send generated graphs via email
+func_send_email () {
+    local logfile=/tmp/$$.email
+    local subject="${interval}m temperature graph report"
+    local boundary="dk1p5Q9m3yT47A987n0p"
+    ###### Email pre-formatting
+    ### Set email headers
+    (
+        echo "From: ${email}"
+        echo "To: ${email}"
+        echo "Subject: ${subject}"
+        echo "MIME-Version: 1.0"
+        echo "Content-Type: multipart/mixed; boundary=${boundary}"
+    ) > "$logfile"
+
+    (
+        echo "--${boundary}"
+        echo "Content-Type: text/html"
+    ) >> $logfile
+    for i in ${graphs[@]}; do
+        (
+            echo "$i graphs" 
+        ) >> $logfile
+        # attach graph
+        outputfilename=$i
+        filename=${outputprefix}-${outputfilename}.png
+        fullpath=${CWD}/${filename}
+        (
+            # Write MIME section header for file attachment (encoded with base64)
+            echo "--${boundary}"
+            echo "Content-Type: image/png"
+            echo "Content-Transfer-Encoding: base64"
+            echo "Content-Disposition: attachment; filename=${filename}"
+            base64 "${fullpath}"
+            # Write MIME section header for html content to come below
+            echo "--${boundary}"
+            echo "Content-Type: text/html"
+        ) >> "$logfile"
+    done
+
+    ### Send report
+    sendmail -t -oi < "$logfile"
+    rm "$logfile"
 }
 
 ############
@@ -265,5 +320,6 @@ func_graph_cpus_together
 func_graph_drives_together
 # func_graph_cpus_separately
 # func_graph_drives_separately
-
-
+if [ ! -z "${email}" ]; then
+    func_send_email
+fi
