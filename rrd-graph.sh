@@ -23,7 +23,7 @@
 # Script variables
 ######################################
 # These use external environment variables if set, otherwise use arbitrary default values
-MAXGRAPHTEMP=${MAXGRAPHTEMP:-50}
+MAXGRAPHTEMP=${MAXGRAPHTEMP:-70}
 MINGRAPHTEMP=${MINGRAPHTEMP:-20}
 SAFETEMPMAX=${SAFETEMPMAX:-46}
 SAFETEMPMIN=${SAFETEMPMIN:-37}
@@ -269,7 +269,8 @@ func_graph_drives_separately () {
 
 # Send generated graphs via email
 func_send_email () {
-    local logfile=/tmp/$$.email
+    local logdir=${TMPDIR,/tmp}
+    local logfile=$(mktemp ${logdir}/$$.email.XXXXXXX)
     local subject="${interval}m temperature graph report"
     local boundary="dk1p5Q9m3yT47A987n0p"
     ###### Email pre-formatting
@@ -320,6 +321,6 @@ func_graph_cpus_together
 func_graph_drives_together
 # func_graph_cpus_separately
 # func_graph_drives_separately
-if [ ! -z "${email}" ]; then
+if [ -n "${email}" ]; then
     func_send_email
 fi

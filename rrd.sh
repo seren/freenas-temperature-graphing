@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 #####
 # This script generates and updates an rrdtool database
 # of CPU and drive temperatures. It calls 'temps-rrd-format.sh'
@@ -184,6 +184,8 @@ else
   fi
 fi
 
+tempdir=${TMPDIR,/tmp}
+tempfile=$(mktemp ${tempdir}/$$.rrd.output.XXXXXXX)
 tempfile=/tmp/$$.temp.rrd.output
 tempargs=""
 # If we run temps-rrd-format.sh in verbose mode, we can't capture the output
