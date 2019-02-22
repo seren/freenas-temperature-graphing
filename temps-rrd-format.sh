@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 #####
 # This script gathers and outputs the CPU and drive
 # temperatures in a format rrdtool can consume.
@@ -26,6 +26,7 @@ Usage $0 [-v] [-d] [-h]
 -v | --verbose  Enables verbose output
 -d | --debug    Outputs each line of the script as it executes (turns on xtrace)
 -h | --help     Displays this message
+-o | --output <file> Output rrd data to the named file
 
 Options for ESXi:
 --platform "esxi"                  Indicates that we will use ESXi tools to retrieve CPU temps
@@ -43,11 +44,13 @@ debug=
 USERNAME=
 BMC_ADDRESS=
 PLATFORM=
+output=/dev/stdout
 while [ $# -gt 0 ]; do
   case $1 in
     -h|--help)  help=1;                     shift 1 ;;
     -v|--verbose) verbose=1;                shift 1 ;;
     -d|--debug) debug=1;                    shift 1 ;;
+    -o|--output) output=$2;                 shift 2 ;;
     --platform) PLATFORM=$2;                shift 2 ;;
     --ipmitool_username) USERNAME=$2;       shift 2 ;;
     --ipmitool_address) BMC_ADDRESS=$2;     shift 2 ;;
@@ -92,6 +95,6 @@ get_temperatures
 
 # Strip any leading, trailing, or duplicate colons
 [ -n "$verbose" ] && echo "Cleaned up data:"
-echo "${data}" | sed 's/:::*/:/;s/^://;s/:$//'
+echo "${data}" | sed 's/:::*/:/;s/^://;s/:$//' > $output
 
 [ -n "$verbose" ] && echo "Done gathering temp data returning"
