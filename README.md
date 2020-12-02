@@ -1,3 +1,5 @@
+**NOTE**: FreeNAS/TrueNAS now has temperature monitoring built-in to the reporting dashboard. I'll leave this tool up for anyone who's interested and will accept pull requests, but it will be fairly unmaintained.
+
 freenas-temperature-graphing
 ============================
 
@@ -5,7 +7,7 @@ Bash scripts to graph FreeNAS CPU and drive temperatures. Graphs are generated
 in the same directory as the scripts (not the web interface). Tested on 9.3,
 9.10, and 11.2.
 
- 
+
 
 Example output:
 ---------------
